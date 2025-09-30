@@ -46,6 +46,10 @@ class DatabaseManager:
         if not self.database_url:
             raise ValueError("DATABASE_URL environment variable is required")
         
+        # Fix for SQLAlchemy 2.0+ compatibility with Heroku's postgres:// scheme
+        if self.database_url.startswith("postgres://"):
+            self.database_url = self.database_url.replace("postgres://", "postgresql://", 1)
+        
         # Create engine
         self.engine = create_engine(self.database_url, echo=False)
         
