@@ -142,6 +142,23 @@ class AuditEventsLogger:
     
     def _parse_heroku_api_error(self, response) -> str:
         """Parse Heroku API error response according to their documentation"""
+        # Check if response has content
+        response_text = response.text.strip() if response.text else ""
+        
+        if not response_text:
+            # Empty response - provide generic error based on status code
+            status_messages = {
+                400: "Bad Request",
+                401: "Unauthorized - Invalid or missing API token",
+                403: "Forbidden - Insufficient permissions",
+                404: "Not Found - Resource not found (check account ID/name)",
+                429: "Too Many Requests - Rate limit exceeded",
+                500: "Internal Server Error",
+                502: "Bad Gateway",
+                503: "Service Unavailable"
+            }
+            return status_messages.get(response.status_code, f"HTTP {response.status_code} error")
+        
         try:
             # Try to parse JSON error response
             error_data = response.json()
@@ -171,7 +188,7 @@ class AuditEventsLogger:
         except (ValueError, KeyError) as e:
             # If JSON parsing fails, fall back to raw response text
             logger.warning(f"Failed to parse Heroku API error response: {e}")
-            return response.text or f"Unknown error (status {response.status_code})"
+            return response_text or f"Unknown error (status {response.status_code})"
 
     def log_audit_events(self, events: list):
         """Log the required attributes of audit events"""
@@ -224,12 +241,22 @@ class AuditEventsLogger:
             logger.info(f"Fetching audit events for day {day_param}")
             logger.info(f"API Endpoint: {url}")
             logger.info(f"Request Parameters: {params}")
-            logger.info(f"Request Headers: {dict(headers)}")
+            
+            # Log headers with masked Authorization token for security
+            safe_headers = dict(headers)
+            if 'Authorization' in safe_headers:
+                safe_headers['Authorization'] = 'Bearer [MASKED]'
+            logger.info(f"Request Headers: {safe_headers}")
+            
             response = requests.get(url, headers=headers, params=params, timeout=30)
             
             # Log response details for debugging
             logger.info(f"Response Status Code: {response.status_code}")
-            logger.info(f"Response Headers: {dict(response.headers)}")
+            # to avoid logging the token
+            #logger.info(f"Response Headers: {dict(response.headers)}")
+            
+            # Log the complete response body for debugging
+            logger.info(f"Response Body: {response.text}")
             
             if response.status_code == 200:
                 data = response.json()
