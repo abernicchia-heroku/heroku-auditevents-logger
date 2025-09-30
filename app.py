@@ -140,6 +140,39 @@ class AuditEventsLogger:
             logger.error(f"Failed to cleanup stuck processes: {e}")
             raise
     
+    def _parse_heroku_api_error(self, response) -> str:
+        """Parse Heroku API error response according to their documentation"""
+        try:
+            # Try to parse JSON error response
+            error_data = response.json()
+            
+            # Heroku API errors have this structure:
+            # {
+            #   "id": "not_found",
+            #   "message": "Couldn't find that resource."
+            # }
+            error_id = error_data.get('id', 'unknown_error')
+            error_message = error_data.get('message', 'No error message provided')
+            
+            # Also check for additional error details if available
+            error_details = []
+            if 'details' in error_data:
+                error_details.append(f"Details: {error_data['details']}")
+            if 'url' in error_data:
+                error_details.append(f"URL: {error_data['url']}")
+            
+            # Build comprehensive error message
+            full_error = f"{error_id}: {error_message}"
+            if error_details:
+                full_error += f" ({'; '.join(error_details)})"
+                
+            return full_error
+            
+        except (ValueError, KeyError) as e:
+            # If JSON parsing fails, fall back to raw response text
+            logger.warning(f"Failed to parse Heroku API error response: {e}")
+            return response.text or f"Unknown error (status {response.status_code})"
+
     def log_audit_events(self, events: list):
         """Log the required attributes of audit events"""
         for event in events:
@@ -204,7 +237,9 @@ class AuditEventsLogger:
                     'count': len(events)
                 }
             else:
-                error_msg = f"API request failed with status {response.status_code}: {response.text}"
+                # Parse Heroku API error response according to their documentation
+                error_details = self._parse_heroku_api_error(response)
+                error_msg = f"API request failed with status {response.status_code}: {error_details}"
                 logger.error(error_msg)
                 return {
                     'success': False,
