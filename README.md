@@ -23,20 +23,48 @@ Set the following environment variables in your Heroku app:
 # Required: Heroku API Token
 HEROKU_API_TOKEN=your_heroku_api_token_here
 
-# Optional: Port (automatically set by Heroku)
-PORT=5000
+# Required: Heroku Account ID or Name
+HEROKU_ACCOUNT_ID_OR_NAME=your_heroku_account_id_or_name_here
+
+# Optional: Event filtering parameters
+FILTER_TYPE=app
+FILTER_ACTION=create
+FILTER_ACTOR_EMAIL=user@example.com
 ```
 
 The `DATABASE_URL` is automatically provided when you add the Heroku Postgres addon.
 
-### 2. Getting a Heroku API Token
+### 2. Getting Heroku API Credentials
 
+#### API Token
 1. Go to your Heroku account settings
 2. Navigate to the "API Key" section
 3. Generate a new API key or copy your existing one
 4. Set it as the `HEROKU_API_TOKEN` environment variable
 
-### 3. Deploy to Heroku
+#### Account ID or Name
+1. Go to your Heroku account settings
+2. Your Account ID is displayed in the "Account Information" section
+3. Copy the Account ID and set it as the `HEROKU_ACCOUNT_ID_OR_NAME` environment variable
+
+Alternatively, you can get your Account ID using the Heroku CLI:
+```bash
+heroku auth:whoami
+```
+
+**Note**: You can use either your Account ID (UUID format) or your account name (email address) for this variable.
+
+### 3. Event Filtering (Optional)
+
+The application supports filtering audit events by setting optional environment variables:
+
+- **`FILTER_TYPE`**: Filter by event type (e.g., "app", "addon", "dyno")
+- **`FILTER_ACTION`**: Filter by event action (e.g., "create", "update", "destroy")
+- **`FILTER_ACTOR_EMAIL`**: Filter by actor email (email address of the user who performed the action)
+
+If no filters are set, all events for the specified day will be retrieved.
+
+### 4. Deploy to Heroku
 
 ```bash
 # Initialize git repository (if not already done)
@@ -53,6 +81,7 @@ heroku addons:create scheduler:standard
 
 # Set environment variables
 heroku config:set HEROKU_API_TOKEN=your_actual_token_here
+heroku config:set HEROKU_ACCOUNT_ID_OR_NAME=your_actual_account_id_or_name_here
 
 # Deploy
 git add .
@@ -114,7 +143,10 @@ The application uses **SQLAlchemy ORM** and **Alembic** for database management,
 
 ### Database Schema
 
-The application creates a `audit_events_log` table with the following structure:
+The application creates a single table to track processing status:
+
+#### audit_events_log
+Tracks the processing status for each date:
 
 ```python
 class AuditEventsLog(Base):
@@ -129,6 +161,8 @@ class AuditEventsLog(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 ```
 
+**Note**: Individual audit events are not stored in the database. Instead, the application logs the required attributes (`created_at`, `actor`, `type`, `action`) for each event retrieved from the Heroku API.
+
 ### Database Indexes
 
 The application automatically creates indexes to optimize query performance:
@@ -136,7 +170,7 @@ The application automatically creates indexes to optimize query performance:
 - **`idx_audit_events_log_status`**: Optimizes status-based queries (cleanup operations)
 - **`idx_audit_events_log_process_date_status`**: Composite index for lock release operations
 
-Note: The `process_date` column has a UNIQUE constraint which automatically creates an index, so no additional index is needed for that column.
+Note: The `process_date` column has a UNIQUE constraint which automatically creates an index.
 
 ### Database Migrations
 
@@ -197,6 +231,7 @@ pip install -r requirements.txt
 
 # Set environment variables
 export HEROKU_API_TOKEN=your_token_here
+export HEROKU_ACCOUNT_ID_OR_NAME=your_account_id_or_name_here
 export DATABASE_URL=your_local_postgres_url
 
 # Run database migrations (if needed)

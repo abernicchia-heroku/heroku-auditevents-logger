@@ -23,9 +23,17 @@ logger = logging.getLogger(__name__)
 class AuditEventsLogger:
     def __init__(self):
         self.heroku_api_token = os.getenv('HEROKU_API_TOKEN')
+        self.heroku_account_id = os.getenv('HEROKU_ACCOUNT_ID_OR_NAME')
+        
+        # Optional filtering parameters
+        self.filter_type = os.getenv('FILTER_TYPE')
+        self.filter_action = os.getenv('FILTER_ACTION')
+        self.filter_actor_email = os.getenv('FILTER_ACTOR_EMAIL')
         
         if not self.heroku_api_token:
             raise ValueError("HEROKU_API_TOKEN environment variable is required")
+        if not self.heroku_account_id:
+            raise ValueError("HEROKU_ACCOUNT_ID_OR_NAME environment variable is required")
         
         # Initialize database manager
         self.db_manager = DatabaseManager()
@@ -132,6 +140,18 @@ class AuditEventsLogger:
             logger.error(f"Failed to cleanup stuck processes: {e}")
             raise
     
+    def log_audit_events(self, events: list):
+        """Log the required attributes of audit events"""
+        for event in events:
+            # Extract and log the required attributes
+            event_created_at = event.get('created_at')
+            actor_email = event.get('actor', {}).get('email') if event.get('actor') else None
+            event_type = event.get('type')
+            event_action = event.get('action')
+            
+            # Log the required attributes
+            logger.info(f"Event: created_at={event_created_at}, actor.email={actor_email}, type={event_type}, action={event_action}")
+    
     def get_audit_events(self, target_date: date) -> Dict[str, Any]:
         """Retrieve audit events from Heroku API for the given date"""
         # Format date for API (YYYY-MM-DD format)
@@ -143,14 +163,27 @@ class AuditEventsLogger:
             'Content-Type': 'application/json'
         }
         
+        # Get account ID or name from environment variable
+        account_id = os.getenv('HEROKU_ACCOUNT_ID_OR_NAME')
+        if not account_id:
+            raise ValueError("HEROKU_ACCOUNT_ID_OR_NAME environment variable is required")
+        
         # API endpoint for audit trail events
-        url = 'https://api.heroku.com/audit-trail/events'
+        url = f'https://api.heroku.com/enterprise-accounts/{account_id}/events'
         
         # Parameters for the API call
         params = {
             'day': day_param,
             'order': 'asc'
         }
+        
+        # Add optional filters
+        if self.filter_type:
+            params['type'] = self.filter_type
+        if self.filter_action:
+            params['action'] = self.filter_action
+        if self.filter_actor_email:
+            params['actor'] = self.filter_actor_email
         
         try:
             logger.info(f"Fetching audit events for day {day_param}")
@@ -160,6 +193,11 @@ class AuditEventsLogger:
                 data = response.json()
                 events = data.get('data', [])
                 logger.info(f"Successfully retrieved {len(events)} audit events for {target_date}")
+                
+                # Log the required attributes of each event
+                if events:
+                    self.log_audit_events(events)
+                
                 return {
                     'success': True,
                     'events': events,

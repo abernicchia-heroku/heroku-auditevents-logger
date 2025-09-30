@@ -16,7 +16,7 @@ def test_environment():
     """Test if required environment variables are set"""
     print("Testing environment variables...")
     
-    required_vars = ['HEROKU_API_TOKEN', 'DATABASE_URL']
+    required_vars = ['HEROKU_API_TOKEN', 'HEROKU_ACCOUNT_ID_OR_NAME', 'DATABASE_URL']
     missing_vars = []
     
     for var in required_vars:

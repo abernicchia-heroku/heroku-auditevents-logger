@@ -37,6 +37,7 @@ class AuditEventsLog(Base):
     def __repr__(self):
         return f"<AuditEventsLog(id={self.id}, process_date={self.process_date}, status='{self.status}')>"
 
+
 class DatabaseManager:
     """Database manager for SQLAlchemy operations"""
     
