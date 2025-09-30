@@ -201,6 +201,8 @@ class AuditEventsLogger:
         if not account_id:
             raise ValueError("HEROKU_ACCOUNT_ID_OR_NAME environment variable is required")
         
+        logger.info(f"Using Heroku Account ID/Name: {account_id}")
+        
         # API endpoint for audit trail events
         url = f'https://api.heroku.com/enterprise-accounts/{account_id}/events'
         
@@ -220,7 +222,14 @@ class AuditEventsLogger:
         
         try:
             logger.info(f"Fetching audit events for day {day_param}")
+            logger.info(f"API Endpoint: {url}")
+            logger.info(f"Request Parameters: {params}")
+            logger.info(f"Request Headers: {dict(headers)}")
             response = requests.get(url, headers=headers, params=params, timeout=30)
+            
+            # Log response details for debugging
+            logger.info(f"Response Status Code: {response.status_code}")
+            logger.info(f"Response Headers: {dict(response.headers)}")
             
             if response.status_code == 200:
                 data = response.json()
