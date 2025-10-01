@@ -192,7 +192,12 @@ class AuditEventsLogger:
 
     def log_audit_events(self, events: list):
         """Log the required attributes of audit events"""
-        for event in events:
+        for i, event in enumerate(events):
+            # Check if event is a dictionary
+            if not isinstance(event, dict):
+                logger.warning(f"Event {i} is not a dictionary: {type(event)} - {event}")
+                continue
+                
             # Extract and log the required attributes
             event_created_at = event.get('created_at')
             actor_email = event.get('actor', {}).get('email') if event.get('actor') else None
@@ -260,7 +265,20 @@ class AuditEventsLogger:
             
             if response.status_code == 200:
                 data = response.json()
-                events = data.get('data', [])
+                logger.info(f"API Response Data Structure: {type(data)}")
+                logger.info(f"API Response Data Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                
+                # Handle different possible response structures
+                if isinstance(data, list):
+                    # If the response is directly a list of events
+                    events = data
+                elif isinstance(data, dict):
+                    # If the response has a 'data' key containing the events
+                    events = data.get('data', [])
+                else:
+                    logger.warning(f"Unexpected response data type: {type(data)}")
+                    events = []
+                
                 logger.info(f"Successfully retrieved {len(events)} audit events for {target_date}")
                 
                 # Log the required attributes of each event
