@@ -1,5 +1,5 @@
-# This app is designed to run as a scheduled job via Heroku Scheduler
-# No web process needed - use: python app.py
+# Web interface for viewing audit events log records
+web: streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0
 
 # One-off dyno commands for database management
 db-init: python db_manager.py init
