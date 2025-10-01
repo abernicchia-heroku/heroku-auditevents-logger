@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class AuditEventsLogger:
     def __init__(self):
         self.heroku_api_token = os.getenv('HEROKU_API_TOKEN')
-        self.heroku_account_id = os.getenv('HEROKU_ACCOUNT_ID_OR_NAME')
+        self.heroku_account_id = os.getenv('HEROKU_ACCOUNT_ID')
         
         # Optional filtering parameters
         self.filter_type = os.getenv('FILTER_TYPE')
@@ -33,7 +33,7 @@ class AuditEventsLogger:
         if not self.heroku_api_token:
             raise ValueError("HEROKU_API_TOKEN environment variable is required")
         if not self.heroku_account_id:
-            raise ValueError("HEROKU_ACCOUNT_ID_OR_NAME environment variable is required")
+            raise ValueError("HEROKU_ACCOUNT_ID environment variable is required")
         
         # Initialize database manager
         self.db_manager = DatabaseManager()
@@ -218,12 +218,12 @@ class AuditEventsLogger:
             'Content-Type': 'application/json'
         }
         
-        # Get account ID or name from environment variable
-        account_id = os.getenv('HEROKU_ACCOUNT_ID_OR_NAME')
+        # Get account ID from environment variable
+        account_id = os.getenv('HEROKU_ACCOUNT_ID')
         if not account_id:
-            raise ValueError("HEROKU_ACCOUNT_ID_OR_NAME environment variable is required")
+            raise ValueError("HEROKU_ACCOUNT_ID environment variable is required")
         
-        logger.info(f"Using Heroku Account ID/Name: {account_id}")
+        logger.info(f"Using Heroku Account ID: {account_id}")
         
         # API endpoint for audit trail events
         url = f'https://api.heroku.com/enterprise-accounts/{account_id}/events'
