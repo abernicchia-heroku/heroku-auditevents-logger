@@ -9,7 +9,6 @@ echo "-----> Generating build-time version information"
 cat > version.json << EOF
 {
   "git_hash": "${SOURCE_VERSION:-unknown}",
-  "git_hash_full": "${SOURCE_VERSION:-unknown}",
   "build_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "stack": "${STACK:-unknown}"
 }

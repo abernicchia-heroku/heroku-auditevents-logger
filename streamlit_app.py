@@ -30,7 +30,6 @@ def get_version_info():
     """Get version information from build-time file and runtime environment variables"""
     version_info = {
         'git_hash': 'unknown',
-        'git_hash_full': 'unknown',
         'build_time': 'unknown',
         'stack': 'unknown'
     }
@@ -42,8 +41,7 @@ def get_version_info():
             version_info.update(file_version_info)
     except (FileNotFoundError, json.JSONDecodeError):
         # Fallback: get build-time info from environment variables
-        version_info['git_hash'] = os.environ.get('SOURCE_VERSION', 'unknown')[:8] if os.environ.get('SOURCE_VERSION') else 'unknown'
-        version_info['git_hash_full'] = os.environ.get('SOURCE_VERSION', 'unknown')
+        version_info['git_hash'] = os.environ.get('SOURCE_VERSION', 'unknown')
         version_info['stack'] = os.environ.get('STACK', 'unknown')
     
     # Get runtime information from Heroku dyno metadata (available only at runtime)
@@ -102,7 +100,9 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write(f"**Git Commit:** `{version_info['git_hash']}`")
+            # Show short version of git hash (first 8 characters)
+            git_hash_short = version_info['git_hash'][:8] if version_info['git_hash'] != 'unknown' and len(version_info['git_hash']) > 8 else version_info['git_hash']
+            st.write(f"**Git Commit:** `{git_hash_short}`")
             if version_info['heroku_release'] != 'unknown':
                 st.write(f"**Heroku Release:** `{version_info['heroku_release']}`")
             if version_info['stack'] != 'unknown':
@@ -120,9 +120,9 @@ def main():
             if version_info['dyno_id'] != 'unknown':
                 st.write(f"**Dyno ID:** `{version_info['dyno_id'][:8]}...`")
         
-        # Show full commit hash if available
-        if version_info['git_hash_full'] != 'unknown' and len(version_info['git_hash_full']) > 8:
-            st.code(f"Full commit hash: {version_info['git_hash_full']}", language=None)
+        # Show full commit hash if available and longer than 8 characters
+        if version_info['git_hash'] != 'unknown' and len(version_info['git_hash']) > 8:
+            st.code(f"Full commit hash: {version_info['git_hash']}", language=None)
     
     # Sidebar for filters
     st.sidebar.header("Filters")

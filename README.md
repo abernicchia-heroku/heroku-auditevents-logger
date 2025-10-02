@@ -79,15 +79,20 @@ heroku addons:create heroku-postgresql:mini
 # Add Heroku Scheduler addon
 heroku addons:create scheduler:standard
 
+# Enable runtime dyno metadata (required for version information display)
+heroku labs:enable runtime-dyno-metadata -a your-app-name
+
 # Set environment variables
 heroku config:set HEROKU_API_TOKEN=your_actual_token_here
-heroku config:set HEROKU_ACCOUNT_ID_OR_NAME=your_actual_account_id_or_name_here
+heroku config:set HEROKU_ACCOUNT_ID=your_actual_account_id_here
 
 # Deploy
 git add .
 git commit -m "Initial commit"
 git push heroku main
 ```
+
+**Note:** The `runtime-dyno-metadata` lab feature enables access to Heroku environment variables like `HEROKU_RELEASE_VERSION`, `HEROKU_RELEASE_CREATED_AT`, and `HEROKU_SLUG_COMMIT`, which are used by the web interface to display version information about the deployed code.
 
 ### 4. Configure Heroku Scheduler
 
