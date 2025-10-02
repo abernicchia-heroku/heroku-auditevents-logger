@@ -333,7 +333,8 @@ def main():
         # Delete button
         if selected_indices:
             if st.button("🗑️ Delete Selected Records", type="primary"):
-                selected_ids = [df.iloc[idx]['ID'] for idx in selected_indices]
+                # Convert numpy.int64 to regular Python int to avoid SQLAlchemy type issues
+                selected_ids = [int(df.iloc[idx]['ID']) for idx in selected_indices]
                 deleted_count = delete_audit_events_logs(selected_ids)
                 st.success(f"Deleted {deleted_count} log records")
                 st.rerun()
