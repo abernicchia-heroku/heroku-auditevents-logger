@@ -175,9 +175,15 @@ https://your-app-name.herokuapp.com/
 - **Color-coded Status**: Visual indicators for different processing statuses
 - **Summary Statistics**: Overview of total records, successful days, failed days, and total events
 - **Detailed View**: Expanded information for selected records
+- **Version Information**: Expandable section showing deployment details including:
+  - Git commit hash (short and full)
+  - Heroku release version and deployment time
+  - Build time and Heroku stack
+  - App name and current dyno ID
 
 ### Interface Components
 
+- **Version Information**: Expandable section with deployment and build details
 - **Sidebar Filters**: Date range and status filtering options
 - **Data Table**: Sortable table showing all log records with key information
 - **Selection Interface**: Multi-select checkboxes for choosing records to delete
@@ -185,6 +191,26 @@ https://your-app-name.herokuapp.com/
 - **Statistics Dashboard**: Real-time summary of processing performance
 
 The web interface provides an easy way to monitor the success/failure of your audit events collection process and manage historical processing records without needing to access the database directly.
+
+### Version Information System
+
+The web interface displays comprehensive version and deployment information through a two-part system:
+
+#### Build-time Information
+Captured during Heroku build process via `bin/post_compile` hook:
+- **Git Commit Hash**: From `SOURCE_VERSION` environment variable
+- **Build Time**: Timestamp when the build occurred
+- **Heroku Stack**: The Heroku stack version used
+
+#### Runtime Information  
+Retrieved from Heroku dyno metadata (requires `runtime-dyno-metadata` lab feature):
+- **Heroku Release Version**: Current release (e.g., "v25")
+- **Deployment Time**: When the release was deployed
+- **Slug Commit**: Git commit hash of the deployed slug
+- **App Name**: Heroku application name
+- **Dyno ID**: Unique identifier of the current dyno instance
+
+This system provides complete traceability of what code is running and when it was deployed, essential for debugging and monitoring in production environments.
 
 ## Database Management
 
