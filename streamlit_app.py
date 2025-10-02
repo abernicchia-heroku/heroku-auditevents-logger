@@ -8,6 +8,8 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
+import json
+import os
 
 from models import DatabaseManager, AuditEventsLog
 
@@ -22,6 +24,42 @@ st.set_page_config(
 @st.cache_resource
 def get_db_manager():
     return DatabaseManager()
+
+@st.cache_data
+def get_version_info():
+    """Get version information from version.json file and environment"""
+    version_info = {
+        'git_hash': 'unknown',
+        'git_hash_full': 'unknown',
+        'heroku_release': 'unknown',
+        'heroku_slug': 'unknown',
+        'build_time': 'unknown',
+        'stack': 'unknown'
+    }
+    
+    # Try to read from version.json file (generated during build)
+    try:
+        with open('version.json', 'r') as f:
+            file_version_info = json.load(f)
+            version_info.update(file_version_info)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Fallback: get info directly from environment variables
+        version_info['git_hash'] = os.environ.get('SOURCE_VERSION', 'unknown')[:8] if os.environ.get('SOURCE_VERSION') else 'unknown'
+        version_info['git_hash_full'] = os.environ.get('SOURCE_VERSION', 'unknown')
+        version_info['heroku_release'] = os.environ.get('HEROKU_RELEASE_VERSION', 'unknown')
+        version_info['heroku_slug'] = os.environ.get('HEROKU_SLUG_COMMIT', 'unknown')
+        version_info['stack'] = os.environ.get('STACK', 'unknown')
+    
+    # Always get current Heroku environment info (may be more recent than build-time)
+    current_release = os.environ.get('HEROKU_RELEASE_VERSION', 'unknown')
+    if current_release != 'unknown':
+        version_info['current_release'] = current_release
+    
+    deployment_time = os.environ.get('HEROKU_RELEASE_CREATED_AT', 'unknown')
+    if deployment_time != 'unknown':
+        version_info['deployment_time'] = deployment_time
+    
+    return version_info
 
 def get_audit_events_logs(filters=None, limit=1000):
     """Get audit events log records with optional filters"""
@@ -61,6 +99,34 @@ def delete_audit_events_logs(record_ids):
 def main():
     st.title("🔍 Heroku Audit Events Logger")
     st.markdown("View, filter, and manage audit events processing logs")
+    
+    # Display version information
+    version_info = get_version_info()
+    
+    # Create expandable version info section
+    with st.expander("ℹ️ Version Information", expanded=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write(f"**Git Commit:** `{version_info['git_hash']}`")
+            if version_info['heroku_release'] != 'unknown':
+                st.write(f"**Heroku Release:** `{version_info['heroku_release']}`")
+            if version_info.get('current_release') and version_info['current_release'] != version_info['heroku_release']:
+                st.write(f"**Current Release:** `{version_info['current_release']}`")
+            if version_info['stack'] != 'unknown':
+                st.write(f"**Heroku Stack:** `{version_info['stack']}`")
+        
+        with col2:
+            if version_info['build_time'] != 'unknown':
+                st.write(f"**Build Time:** {version_info['build_time']}")
+            if version_info.get('deployment_time') != 'unknown':
+                st.write(f"**Deployed At:** {version_info['deployment_time']}")
+            if version_info['heroku_slug'] != 'unknown':
+                st.write(f"**Slug Commit:** `{version_info['heroku_slug'][:8]}`")
+        
+        # Show full commit hash if available
+        if version_info['git_hash_full'] != 'unknown' and len(version_info['git_hash_full']) > 8:
+            st.code(f"Full commit hash: {version_info['git_hash_full']}", language=None)
     
     # Sidebar for filters
     st.sidebar.header("Filters")

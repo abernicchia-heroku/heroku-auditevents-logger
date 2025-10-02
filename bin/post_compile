@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Heroku post-compile hook
+# This script runs after the build is complete but before the slug is created
+
+echo "-----> Generating version information"
+
+# Create version.json with build information
+cat > version.json << EOF
+{
+  "git_hash": "${SOURCE_VERSION:-unknown}",
+  "git_hash_full": "${SOURCE_VERSION:-unknown}",
+  "heroku_release": "${HEROKU_RELEASE_VERSION:-unknown}",
+  "heroku_slug": "${HEROKU_SLUG_COMMIT:-unknown}",
+  "build_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "stack": "${STACK:-unknown}"
+}
+EOF
+
+echo "-----> Version information generated"
+cat version.json
