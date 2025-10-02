@@ -16,9 +16,149 @@ from models import DatabaseManager, AuditEventsLog
 # Configure Streamlit page
 st.set_page_config(
     page_title="Heroku Audit Events Logger",
-    page_icon="🔍",
+    page_icon="🟣",
     layout="wide"
 )
+
+# Custom CSS for Heroku-inspired purple theme
+st.markdown("""
+<style>
+    /* Main theme colors */
+    :root {
+        --heroku-purple: #6762A6;
+        --heroku-dark-purple: #5A4FCF;
+        --heroku-light-purple: #8B7ED8;
+        --heroku-accent: #E8E6FF;
+        --heroku-success: #00D924;
+        --heroku-warning: #FFB000;
+        --heroku-error: #FF6B6B;
+    }
+    
+    /* Header styling */
+    .main-header {
+        background: linear-gradient(135deg, var(--heroku-purple) 0%, var(--heroku-dark-purple) 100%);
+        padding: 2rem 1rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(103, 98, 166, 0.3);
+    }
+    
+    .main-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .main-header p {
+        margin: 0.5rem 0 0 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: var(--heroku-accent);
+    }
+    
+    /* Metric cards */
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 4px solid var(--heroku-purple);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    /* Status badges */
+    .status-success {
+        background-color: var(--heroku-success);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-failed {
+        background-color: var(--heroku-error);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-processing {
+        background-color: var(--heroku-warning);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--heroku-purple) 0%, var(--heroku-dark-purple) 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(103, 98, 166, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(103, 98, 166, 0.4);
+    }
+    
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        background-color: var(--heroku-accent);
+        border-radius: 8px;
+        border: 1px solid var(--heroku-light-purple);
+    }
+    
+    /* Data table styling */
+    .dataframe {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Version info styling */
+    .version-info {
+        background: linear-gradient(135deg, #f8f9ff 0%, var(--heroku-accent) 100%);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--heroku-light-purple);
+        margin: 1rem 0;
+    }
+    
+    /* Footer */
+    .footer {
+        text-align: center;
+        padding: 2rem;
+        color: var(--heroku-purple);
+        border-top: 1px solid var(--heroku-accent);
+        margin-top: 3rem;
+    }
+    
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 # Initialize database manager
 @st.cache_resource
@@ -89,14 +229,19 @@ def delete_audit_events_logs(record_ids):
         return deleted_count
 
 def main():
-    st.title("🔍 Heroku Audit Events Logger")
-    st.markdown("View, filter, and manage audit events processing logs")
+    # Custom header with Heroku styling
+    st.markdown("""
+    <div class="main-header">
+        <h1>🟣 Heroku Audit Events Logger</h1>
+        <p>Monitor, filter, and manage your audit events processing logs</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Display version information
     version_info = get_version_info()
     
-    # Create expandable version info section
-    with st.expander("ℹ️ Version Information", expanded=False):
+    # Create expandable version info section with custom styling
+    with st.expander("🔧 Version & Deployment Information", expanded=False):
         col1, col2 = st.columns(2)
         
         with col1:
@@ -124,8 +269,13 @@ def main():
         if version_info['git_hash'] != 'unknown' and len(version_info['git_hash']) > 8:
             st.code(f"Full commit hash: {version_info['git_hash']}", language=None)
     
-    # Sidebar for filters
-    st.sidebar.header("Filters")
+    # Sidebar for filters with enhanced styling
+    st.sidebar.markdown("""
+    <div style="background: linear-gradient(135deg, var(--heroku-purple) 0%, var(--heroku-dark-purple) 100%); 
+                padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
+        <h2 style="color: white; margin: 0; font-size: 1.5rem;">🔍 Filters</h2>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Date range filter
     col1, col2 = st.sidebar.columns(2)
@@ -188,19 +338,37 @@ def main():
                 st.success(f"Deleted {deleted_count} log records")
                 st.rerun()
         
-        # Display table with color coding
+        # Display table with enhanced Heroku-style color coding
         def color_status(val):
             if val == 'SUCCESS':
-                return 'background-color: #d4edda; color: #155724'
+                return 'background-color: #e8f5e8; color: #00D924; font-weight: 600; border-radius: 4px; padding: 2px 8px;'
             elif val == 'FAILED':
-                return 'background-color: #f8d7da; color: #721c24'
+                return 'background-color: #ffe8e8; color: #FF6B6B; font-weight: 600; border-radius: 4px; padding: 2px 8px;'
             elif val == 'ERROR':
-                return 'background-color: #f8d7da; color: #721c24'
+                return 'background-color: #ffe8e8; color: #FF6B6B; font-weight: 600; border-radius: 4px; padding: 2px 8px;'
             elif val == 'PROCESSING':
-                return 'background-color: #fff3cd; color: #856404'
+                return 'background-color: #fff8e1; color: #FFB000; font-weight: 600; border-radius: 4px; padding: 2px 8px;'
             return ''
         
-        styled_df = df.style.applymap(color_status, subset=['Status'])
+        # Apply Heroku-inspired styling to the dataframe
+        styled_df = df.style.applymap(color_status, subset=['Status']).set_table_styles([
+            {'selector': 'thead th', 'props': [
+                ('background-color', 'var(--heroku-purple)'),
+                ('color', 'white'),
+                ('font-weight', '600'),
+                ('text-align', 'center'),
+                ('padding', '12px'),
+                ('border', 'none')
+            ]},
+            {'selector': 'tbody td', 'props': [
+                ('padding', '10px'),
+                ('border-bottom', '1px solid #E8E6FF'),
+                ('text-align', 'center')
+            ]},
+            {'selector': 'tbody tr:hover', 'props': [
+                ('background-color', '#f8f9ff')
+            ]}
+        ])
         
         st.dataframe(
             styled_df,
@@ -224,19 +392,45 @@ def main():
         
         with col1:
             total_records = len(log_records)
-            st.metric("Total Records", total_records)
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="color: var(--heroku-purple); margin: 0;">📊 Total Records</h3>
+                <h2 style="margin: 0.5rem 0 0 0; color: #333;">{total_records}</h2>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col2:
             successful_records = len([r for r in log_records if r.status == 'SUCCESS'])
-            st.metric("Successful", successful_records)
+            success_rate = (successful_records / total_records * 100) if total_records > 0 else 0
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="color: var(--heroku-success); margin: 0;">✅ Successful</h3>
+                <h2 style="margin: 0.5rem 0 0 0; color: #333;">{successful_records}</h2>
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">{success_rate:.1f}% success rate</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col3:
             failed_records = len([r for r in log_records if r.status in ['FAILED', 'ERROR']])
-            st.metric("Failed", failed_records)
+            failure_rate = (failed_records / total_records * 100) if total_records > 0 else 0
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="color: var(--heroku-error); margin: 0;">❌ Failed</h3>
+                <h2 style="margin: 0.5rem 0 0 0; color: #333;">{failed_records}</h2>
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">{failure_rate:.1f}% failure rate</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col4:
             total_events = sum([r.events_count for r in log_records if r.events_count])
-            st.metric("Total Events", total_events)
+            avg_events = (total_events / successful_records) if successful_records > 0 else 0
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="color: var(--heroku-dark-purple); margin: 0;">🎯 Total Events</h3>
+                <h2 style="margin: 0.5rem 0 0 0; color: #333;">{total_events:,}</h2>
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">{avg_events:.1f} avg per success</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Show detailed information for selected record
         if selected_indices and len(selected_indices) == 1:
@@ -256,6 +450,13 @@ def main():
                 st.write(f"**Updated At:** {selected_record.updated_at}")
                 if selected_record.error_message:
                     st.write(f"**Error Message:** {selected_record.error_message}")
+    
+    # Footer
+    st.markdown("""
+    <div class="footer">
+        <p>🟣 Powered by Heroku • Built with Streamlit • Audit Events Logger v1.0</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
