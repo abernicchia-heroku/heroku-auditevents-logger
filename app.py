@@ -1,6 +1,7 @@
 import os
 import logging
 import sys
+import argparse
 from datetime import datetime, timedelta, date
 from typing import Optional, Dict, Any
 import requests
@@ -205,7 +206,7 @@ class AuditEventsLogger:
             event_action = event.get('action')
             
             # Log the required attributes
-            logger.info(f"Event: created_at={event_created_at}, actor.email={actor_email}, type={event_type}, action={event_action}")
+            logger.info(f"Audit Event: created_at={event_created_at}, actor.email={actor_email}, type={event_type}, action={event_action}")
     
     def get_audit_events(self, target_date: date) -> Dict[str, Any]:
         """Retrieve audit events from Heroku API for the given date"""
@@ -265,7 +266,6 @@ class AuditEventsLogger:
             
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"API Response Data Structure: {type(data)}")
                 
                 # Heroku API returns a list directly
                 if isinstance(data, list):
@@ -361,10 +361,43 @@ class AuditEventsLogger:
             logger.error(f"Unexpected error processing audit events for {target_date}: {e}")
             return False
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="Heroku Audit Events Logger - Retrieve and log audit events from Heroku API"
+    )
+    
+    parser.add_argument(
+        '--date',
+        type=str,
+        help='Specific date to retrieve audit events for (YYYY-MM-DD format). If not provided, uses previous day.',
+        metavar='YYYY-MM-DD'
+    )
+    
+    return parser.parse_args()
+
+def parse_date_string(date_string: str) -> date:
+    """Parse date string in YYYY-MM-DD format"""
+    try:
+        return datetime.strptime(date_string, '%Y-%m-%d').date()
+    except ValueError as e:
+        raise ValueError(f"Invalid date format. Expected YYYY-MM-DD, got: {date_string}") from e
+
 def main():
     """Main function to run the audit events processing"""
     audit_logger = None
     try:
+        # Parse command line arguments
+        args = parse_arguments()
+        
+        # Determine target date
+        if args.date:
+            target_date = parse_date_string(args.date)
+            logger.info(f"Using user-specified date: {target_date}")
+        else:
+            target_date = date.today() - timedelta(days=1)
+            logger.info(f"Using default previous day: {target_date}")
+        
         # Initialize the logger
         audit_logger = AuditEventsLogger()
         
@@ -374,8 +407,8 @@ def main():
         # Clean up any stuck processes from previous runs
         audit_logger.cleanup_stuck_processes()
         
-        # Process audit events for previous day
-        success = audit_logger.process_audit_events()
+        # Process audit events for the specified date
+        success = audit_logger.process_audit_events(target_date)
         
         if success:
             logger.info("Audit events processing completed successfully")
