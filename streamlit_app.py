@@ -51,12 +51,12 @@ def get_version_info():
         version_info['stack'] = os.environ.get('STACK', 'unknown')
     
     # Always get current Heroku environment info (may be more recent than build-time)
-    current_release = os.environ.get('HEROKU_RELEASE_VERSION', 'unknown')
-    if current_release != 'unknown':
+    current_release = os.environ.get('HEROKU_RELEASE_VERSION')
+    if current_release:
         version_info['current_release'] = current_release
     
-    deployment_time = os.environ.get('HEROKU_RELEASE_CREATED_AT', 'unknown')
-    if deployment_time != 'unknown':
+    deployment_time = os.environ.get('HEROKU_RELEASE_CREATED_AT')
+    if deployment_time:
         version_info['deployment_time'] = deployment_time
     
     return version_info
@@ -117,11 +117,11 @@ def main():
                 st.write(f"**Heroku Stack:** `{version_info['stack']}`")
         
         with col2:
-            if version_info['build_time'] != 'unknown':
+            if version_info.get('build_time', 'unknown') != 'unknown':
                 st.write(f"**Build Time:** {version_info['build_time']}")
-            if version_info.get('deployment_time', 'unknown') != 'unknown':
-                st.write(f"**Deployed At:** {version_info.get('deployment_time')}")
-            if version_info['heroku_slug'] != 'unknown' and len(version_info['heroku_slug']) > 8:
+            if version_info.get('deployment_time'):
+                st.write(f"**Deployed At:** {version_info['deployment_time']}")
+            if version_info.get('heroku_slug', 'unknown') != 'unknown' and len(version_info.get('heroku_slug', '')) > 8:
                 st.write(f"**Slug Commit:** `{version_info['heroku_slug'][:8]}`")
         
         # Show full commit hash if available
