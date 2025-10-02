@@ -123,7 +123,7 @@ You can specify a custom date to retrieve audit events for a specific date:
 
 ```bash
 # Process audit events for a specific date
-heroku run python app.py --date 2025-09-29
+heroku run -- python app.py --date 2025-09-29
 
 # Local execution with custom date
 python app.py --date 2025-09-29
