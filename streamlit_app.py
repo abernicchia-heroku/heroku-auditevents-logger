@@ -119,9 +119,9 @@ def main():
         with col2:
             if version_info['build_time'] != 'unknown':
                 st.write(f"**Build Time:** {version_info['build_time']}")
-            if version_info.get('deployment_time') != 'unknown':
-                st.write(f"**Deployed At:** {version_info['deployment_time']}")
-            if version_info['heroku_slug'] != 'unknown':
+            if version_info.get('deployment_time', 'unknown') != 'unknown':
+                st.write(f"**Deployed At:** {version_info.get('deployment_time')}")
+            if version_info['heroku_slug'] != 'unknown' and len(version_info['heroku_slug']) > 8:
                 st.write(f"**Slug Commit:** `{version_info['heroku_slug'][:8]}`")
         
         # Show full commit hash if available
