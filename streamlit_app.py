@@ -27,37 +27,31 @@ def get_db_manager():
 
 @st.cache_data
 def get_version_info():
-    """Get version information from version.json file and environment"""
+    """Get version information from build-time file and runtime environment variables"""
     version_info = {
         'git_hash': 'unknown',
         'git_hash_full': 'unknown',
-        'heroku_release': 'unknown',
-        'heroku_slug': 'unknown',
         'build_time': 'unknown',
         'stack': 'unknown'
     }
     
-    # Try to read from version.json file (generated during build)
+    # Get build-time information from version.json file
     try:
         with open('version.json', 'r') as f:
             file_version_info = json.load(f)
             version_info.update(file_version_info)
     except (FileNotFoundError, json.JSONDecodeError):
-        # Fallback: get info directly from environment variables
+        # Fallback: get build-time info from environment variables
         version_info['git_hash'] = os.environ.get('SOURCE_VERSION', 'unknown')[:8] if os.environ.get('SOURCE_VERSION') else 'unknown'
         version_info['git_hash_full'] = os.environ.get('SOURCE_VERSION', 'unknown')
-        version_info['heroku_release'] = os.environ.get('HEROKU_RELEASE_VERSION', 'unknown')
-        version_info['heroku_slug'] = os.environ.get('HEROKU_SLUG_COMMIT', 'unknown')
         version_info['stack'] = os.environ.get('STACK', 'unknown')
     
-    # Always get current Heroku environment info (may be more recent than build-time)
-    current_release = os.environ.get('HEROKU_RELEASE_VERSION')
-    if current_release:
-        version_info['current_release'] = current_release
-    
-    deployment_time = os.environ.get('HEROKU_RELEASE_CREATED_AT')
-    if deployment_time:
-        version_info['deployment_time'] = deployment_time
+    # Get runtime information from Heroku dyno metadata (available only at runtime)
+    version_info['heroku_release'] = os.environ.get('HEROKU_RELEASE_VERSION', 'unknown')
+    version_info['heroku_slug'] = os.environ.get('HEROKU_SLUG_COMMIT', 'unknown')
+    version_info['deployment_time'] = os.environ.get('HEROKU_RELEASE_CREATED_AT', 'unknown')
+    version_info['app_name'] = os.environ.get('HEROKU_APP_NAME', 'unknown')
+    version_info['dyno_id'] = os.environ.get('HEROKU_DYNO_ID', 'unknown')
     
     return version_info
 
@@ -111,18 +105,20 @@ def main():
             st.write(f"**Git Commit:** `{version_info['git_hash']}`")
             if version_info['heroku_release'] != 'unknown':
                 st.write(f"**Heroku Release:** `{version_info['heroku_release']}`")
-            if version_info.get('current_release') and version_info['current_release'] != version_info['heroku_release']:
-                st.write(f"**Current Release:** `{version_info['current_release']}`")
             if version_info['stack'] != 'unknown':
                 st.write(f"**Heroku Stack:** `{version_info['stack']}`")
+            if version_info['app_name'] != 'unknown':
+                st.write(f"**App Name:** `{version_info['app_name']}`")
         
         with col2:
             if version_info.get('build_time', 'unknown') != 'unknown':
                 st.write(f"**Build Time:** {version_info['build_time']}")
-            if version_info.get('deployment_time'):
+            if version_info.get('deployment_time', 'unknown') != 'unknown':
                 st.write(f"**Deployed At:** {version_info['deployment_time']}")
             if version_info.get('heroku_slug', 'unknown') != 'unknown' and len(version_info.get('heroku_slug', '')) > 8:
                 st.write(f"**Slug Commit:** `{version_info['heroku_slug'][:8]}`")
+            if version_info['dyno_id'] != 'unknown':
+                st.write(f"**Dyno ID:** `{version_info['dyno_id'][:8]}...`")
         
         # Show full commit hash if available
         if version_info['git_hash_full'] != 'unknown' and len(version_info['git_hash_full']) > 8:
