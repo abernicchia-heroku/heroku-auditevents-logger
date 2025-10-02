@@ -1,15 +1,16 @@
 Application Specs:
 
 - create a python app that can be deployed to heroku
-- this app is not an API endpoint. it has to run based on an external scheduler (e.g. heroku scheduler), every time it runs it reads current date and retrieves previous day audit events
-- this app has to call this heroku endpoint api.heroku.com/enterprise-accounts/$ENTERPRISE_ACCOUNT_ID_OR_NAME/events @https://devcenter.heroku.com/articles/platform-api-reference#audit-trail-event-list and retrieve all the events of the previous day (e.g. if today is Septmber 29, it has to retrieve all the events happened on September 28), without specifying actor, action and type, and using an ascending order. 
+- this app is not an API endpoint. it has to run based on an external scheduler (e.g. heroku scheduler), every time it runs it takes the current date and retrieves previous day audit events otherwise user can override the date and retrieve audit events for such specific date
+- this app has to call this heroku endpoint api.heroku.com/enterprise-accounts/$ENTERPRISE_ACCOUNT_ID/events @https://devcenter.heroku.com/articles/platform-api-reference#audit-trail-event-list and retrieve all the events of the previous day (e.g. if today is September 29, it has to retrieve all the events happened on September 28) and use an ascending order. 
 - This app has to save to heroku postgres that the events were taken on a specific date along with a result status describing if the procedure was successful or not.
-- before running the procedure the app checks if there is already a process running for the same date or if the database already contains a record for that date, in both cases it quits logging a message related to the condition found. Take into account that multiple processes can run at the same time and they will all check the database for the same date.
+- before running the procedure the app checks if there is already a process running for the same date or if the database already contains a record for that date, in both cases it quits and logs a message related to the condition found. Take into account that multiple processes can run at the same time (eg heroku scheduler + manual execution or overlapping heroku scheduler executions) and they will all check the database for the same date.
 - the heroku api endpoint accepts a param that is "day" and not "created_at" and it's a single day not a start/end date range
 - based on the SQL queries that are executed at code level, add some db indexes to speed up those
-- instead of creating ad-hoc scripts fro db/schema migration use sqlalchemy and alembic to manage all the db-related operations and future changes
+- instead of creating ad-hoc scripts for db/schema migration use sqlalchemy and alembic to manage all the db-related operations and future changes
 - update the Procfile and create some entries to run one-off dynos for the following commands: 1) python db_manager.py init 2) python db_manager.py cleanup
 - from the env variables it's possible to configure the app to filter the events by "type" and "action" and "actor.email"
-- using the logger object, log "created_at", "actor.name", "type" and "action" JSON attributes of all the events retrieved from the heroku api endpoint
+- using the logger object, log "created_at", "actor.email", "type" and "action" JSON attributes of all the events retrieved from the heroku api endpoint
+- the app provides a Streamlit web user interface to display and delete the audit events log records and also filter those by status and order by process_date
 
 TODO:

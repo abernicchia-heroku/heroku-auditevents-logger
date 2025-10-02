@@ -1,16 +1,18 @@
 # Heroku Audit Events Logger
 
-A Python script that runs on Heroku via the Heroku Scheduler addon to retrieve and log audit trail events from the Heroku Platform API on a daily basis.
+A Python application that runs on Heroku to retrieve and log audit trail events from the Heroku Platform API. It includes both a scheduled processing script and a web interface for monitoring and managing the processing logs.
 
 ## Features
 
 - **Daily Processing**: Retrieves audit events from the previous day when triggered
+- **Custom Date Processing**: Override date to retrieve audit events for any specific date
+- **Web Interface**: Streamlit-based web UI for viewing and managing processing logs
 - **Duplicate Prevention**: Checks if events for a date have already been processed
 - **Concurrency Safety**: Atomic database locking prevents multiple processes from processing the same date
 - **Database Logging**: Stores processing status and results in PostgreSQL
 - **External Scheduling**: Designed to run via Heroku Scheduler addon
 - **Error Handling**: Comprehensive error handling and logging
-- **Simple Execution**: Single command-line script with no web server
+- **Flexible Execution**: Command-line script with optional date parameter
 - **Stuck Process Cleanup**: Automatically cleans up stuck processing records
 
 ## Setup
@@ -23,8 +25,8 @@ Set the following environment variables in your Heroku app:
 # Required: Heroku API Token
 HEROKU_API_TOKEN=your_heroku_api_token_here
 
-# Required: Heroku Account ID or Name
-HEROKU_ACCOUNT_ID_OR_NAME=your_heroku_account_id_or_name_here
+# Required: Heroku Account ID
+HEROKU_ACCOUNT_ID=your_heroku_account_id_here
 
 # Optional: Event filtering parameters
 FILTER_TYPE=app
@@ -42,17 +44,15 @@ The `DATABASE_URL` is automatically provided when you add the Heroku Postgres ad
 3. Generate a new API key or copy your existing one
 4. Set it as the `HEROKU_API_TOKEN` environment variable
 
-#### Account ID or Name
+#### Account ID
 1. Go to your Heroku account settings
 2. Your Account ID is displayed in the "Account Information" section
-3. Copy the Account ID and set it as the `HEROKU_ACCOUNT_ID_OR_NAME` environment variable
+3. Copy the Account ID and set it as the `HEROKU_ACCOUNT_ID` environment variable
 
 Alternatively, you can get your Account ID using the Heroku CLI:
 ```bash
-heroku auth:whoami
+heroku api GET /enterprise-accounts/<YOUR_ACCOUNT_NAME_HERE>
 ```
-
-**Note**: You can use either your Account ID (UUID format) or your account name (email address) for this variable.
 
 ### 3. Event Filtering (Optional)
 
@@ -102,15 +102,32 @@ After deployment, configure the Heroku Scheduler addon:
 
 ## Manual Execution
 
-You can also run the script manually for testing or one-off processing:
+You can run the script manually for testing or one-off processing:
 
+### Default Behavior (Previous Day)
 ```bash
-# Run via Heroku CLI
+# Run via Heroku CLI (processes previous day)
 heroku run python app.py
 
 # Or run locally (with proper environment variables set)
 python app.py
 ```
+
+### Custom Date Processing
+You can specify a custom date to retrieve audit events for a specific date:
+
+```bash
+# Process audit events for a specific date
+heroku run python app.py --date 2025-09-29
+
+# Local execution with custom date
+python app.py --date 2025-09-29
+
+# Show help and available options
+python app.py --help
+```
+
+**Date Format**: Use YYYY-MM-DD format for the `--date` parameter.
 
 ### Database Management Commands
 
@@ -131,6 +148,38 @@ heroku run python db_manager.py reset 2024-09-28
 ```
 
 **Note**: The `db-init` and `db-cleanup` commands are defined in the Procfile as one-off dyno processes, making them easy to run via the Heroku CLI.
+
+## Web Interface
+
+The application includes a **Streamlit-based web interface** for viewing and managing audit events processing logs.
+
+### Accessing the Web Interface
+
+The web interface is automatically deployed and accessible at your Heroku app URL:
+
+```
+https://your-app-name.herokuapp.com/
+```
+
+### Features
+
+- **View Processing Logs**: Display all audit events log records with processing status
+- **Filter by Status**: Filter records by SUCCESS, FAILED, ERROR, or PROCESSING status  
+- **Filter by Date Range**: Filter records by process date range
+- **Delete Records**: Select and delete multiple log records
+- **Color-coded Status**: Visual indicators for different processing statuses
+- **Summary Statistics**: Overview of total records, successful days, failed days, and total events
+- **Detailed View**: Expanded information for selected records
+
+### Interface Components
+
+- **Sidebar Filters**: Date range and status filtering options
+- **Data Table**: Sortable table showing all log records with key information
+- **Selection Interface**: Multi-select checkboxes for choosing records to delete
+- **Action Buttons**: Delete selected records with confirmation
+- **Statistics Dashboard**: Real-time summary of processing performance
+
+The web interface provides an easy way to monitor the success/failure of your audit events collection process and manage historical processing records without needing to access the database directly.
 
 ## Database Management
 
